@@ -1,0 +1,371 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chase the Button</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;1,9..144,300&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: rgb(255, 255, 255);
+    --surface2: rgb(255, 255, 255);
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --accent: #729f00;
+    --accent2: #7df9c8;
+    --text: #000000;
+    --muted: #7a7880;
+    --btn-bg: antiquewhite;
+    --btn-hover: antiquewhite;
+    --radius: 12px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.25rem;
+    color: black;
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 16px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  #game-wrap {
+    position: relative;
+    height: 520px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  /* grid lines atmosphere */
+  #game-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+  }
+
+  #trail-svg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* the button */
+  #chase-btn {
+    position: absolute;
+    padding: 11px 24px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    background: var(--btn-bg);
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.12s, border-color 0.12s, transform 0.08s, box-shadow 0.12s;
+    box-shadow: 0 0 0 0 rgba(200,240,100,0);
+  }
+  #chase-btn:hover {
+    background: var(--btn-hover);
+    border-color: var(--accent);
+    box-shadow: 0 0 18px rgba(200,240,100,0.15);
+  }
+  #chase-btn:active {
+    transform: scale(0.94);
+  }
+
+  /* click burst */
+  .burst {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    pointer-events: none;
+    transform: translate(-50%,-50%) scale(1);
+    animation: burst 0.45s ease-out forwards;
+  }
+  @keyframes burst {
+    to { transform: translate(-50%,-50%) scale(5); opacity: 0; }
+  }
+
+  #click-counter {
+    position: absolute;
+    bottom: 14px;
+    left: 16px;
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* scoreboard sidebar */
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stat-card .label {
+    font-size: 0.63rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .stat-card .val {
+    font-family: 'Fraunces', serif;
+    font-size: 1.9rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-card.highlight .val {
+    color: var(--accent);
+  }
+  .stat-card .unit {
+    font-size: 0.65rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .how-to {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 0.68rem;
+    line-height: 1.7;
+    color: var(--muted);
+    margin-top: auto;
+  }
+  .how-to strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  @media (max-width: 640px) {
+    .layout { grid-template-columns: 1fr; }
+    #game-wrap { height: 380px; }
+    .sidebar { flex-direction: row; flex-wrap: wrap; }
+    .stat-card { flex: 1 1 140px; }
+    .how-to { display: none; }
+  }
+
+  .topBar {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    background-color: rgb(100, 36, 36);
+    color:white;
+    height: 100px;
+    line-height: 100px;
+    padding-left: 30px;
+    font-family: 'Fraunces', serif;
+    font-weight: 300 !important;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+}
+
+.topBar h1 {
+    color: white;
+    margin: 0;
+}
+
+</style>
+
+<!--Import the Stylesheet-->
+    <link rel="stylesheet" href="css/fromScratchStyles.css">
+
+</head>
+<body>
+
+  <div class="topBar">
+        <h1>Zachary R Grant</h1>
+    </div>
+
+    <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="button_chase_game.html">Button Chase Game</a>
+        <a href="fromScratch.html">From Scratch Page</a>
+    </nav>
+    <br><br><br><br>
+<h1>Chase the Button</h1>
+<p class="subtitle">How fast are your reflexes?</p>
+
+<div class="layout">
+  <div id="game-wrap">
+    <svg id="trail-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <button id="chase-btn">click me</button>
+    <span id="click-counter">clicks: 0</span>
+  </div>
+
+  <div class="sidebar">
+    <div class="stat-card">
+      <span class="label">avg time</span>
+      <span class="val" id="avg-val">—</span>
+      <span class="unit" id="avg-unit"></span>
+    </div>
+    <div class="stat-card highlight">
+      <span class="label">fastest</span>
+      <span class="val" id="best-val">—</span>
+      <span class="unit" id="best-unit"></span>
+    </div>
+    <div class="stat-card">
+      <span class="label">total clicks</span>
+      <span class="val" id="total-val">0</span>
+    </div>
+    <div class="how-to">
+      <strong>How to play</strong><br/>
+      Click the button as fast as you can. It jumps to a random spot each time.<br/><br/>
+      Beat your <span style="color:var(--accent)">fastest</span> time.
+    </div>
+  </div>
+</div>
+
+<script>
+  const btn = document.getElementById('chase-btn');
+  const avgEl = document.getElementById('avg-val');
+  const avgUnit = document.getElementById('avg-unit');
+  const bestEl = document.getElementById('best-val');
+  const bestUnit = document.getElementById('best-unit');
+  const totalEl = document.getElementById('total-val');
+  const clickCounter = document.getElementById('click-counter');
+  const wrap = document.getElementById('game-wrap');
+  const trailSvg = document.getElementById('trail-svg');
+
+  let lastTime = null;
+  let intervals = [];
+  let clicks = 0;
+  let lastCx = null, lastCy = null;
+
+  const MARGIN = 72;
+  const BTN_W = 108;
+  const BTN_H = 42;
+
+  function fmtTime(ms) {
+    if (ms < 1000) return { val: Math.round(ms), unit: 'ms' };
+    return { val: (ms / 1000).toFixed(2), unit: 's' };
+  }
+
+  function randomPos() {
+    const w = wrap.clientWidth;
+    const h = wrap.clientHeight;
+    const x = Math.floor(Math.random() * (w - MARGIN * 2 - BTN_W) + MARGIN);
+    const y = Math.floor(Math.random() * (h - MARGIN * 2 - BTN_H) + MARGIN);
+    return { x, y };
+  }
+
+  function drawTrail(x1, y1, x2, y2) {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke', 'rgba(125,249,200,0.18)');
+    line.setAttribute('stroke-width', '1');
+    line.setAttribute('stroke-dasharray', '4 4');
+    trailSvg.appendChild(line);
+    if (trailSvg.children.length > 50) trailSvg.removeChild(trailSvg.firstChild);
+  }
+
+  function spawnBurst(cx, cy) {
+    const el = document.createElement('div');
+    el.className = 'burst';
+    el.style.left = cx + 'px';
+    el.style.top = cy + 'px';
+    wrap.appendChild(el);
+    setTimeout(() => el.remove(), 500);
+  }
+
+  function moveBtn() {
+    const { x, y } = randomPos();
+    btn.style.left = x + 'px';
+    btn.style.top = y + 'px';
+    return { cx: x + BTN_W / 2, cy: y + BTN_H / 2 };
+  }
+
+  moveBtn();
+
+  btn.addEventListener('click', (e) => {
+    const now = performance.now();
+    clicks++;
+    clickCounter.textContent = 'clicks: ' + clicks;
+    totalEl.textContent = clicks;
+
+    const bRect = btn.getBoundingClientRect();
+    const wRect = wrap.getBoundingClientRect();
+    const bx = bRect.left - wRect.left + bRect.width / 2;
+    const by = bRect.top - wRect.top + bRect.height / 2;
+    spawnBurst(bx, by);
+
+    if (lastTime !== null) {
+      const gap = now - lastTime;
+      intervals.push(gap);
+      const avg = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+      const best = Math.min(...intervals);
+      const avgFmt = fmtTime(avg);
+      const bestFmt = fmtTime(best);
+      avgEl.textContent = avgFmt.val;
+      avgUnit.textContent = avgFmt.unit;
+      bestEl.textContent = bestFmt.val;
+      bestUnit.textContent = bestFmt.unit;
+    }
+    lastTime = now;
+
+    const { cx, cy } = moveBtn();
+    if (lastCx !== null) drawTrail(lastCx, lastCy, cx, cy);
+    lastCx = cx; lastCy = cy;
+  });
+</script>
+</body>
+</html>
